@@ -6,13 +6,12 @@ Date: 2nd June, 2018
 Description: Logistic Regression module to do binary classification using sigmoid function
 """
 
-import sys
 import numpy as np
 import matplotlib.pyplot as plt
-import pandas as pd
 from sklearn.model_selection import train_test_split
 
 from utilities.util_functions import sigmoid
+from dataset.dataset import logistic_regression
 
 
 class LogisticRegression:
@@ -49,33 +48,29 @@ class LogisticRegression:
         :return: x and y training matrices
         """
 
-        # Costruct training matrices
+        # Create the training set using logistic_regression function of dataset module
+        # x_i_j is ith feature when j is inside circle(1) or outside circle(0)
+        x_1_1, x_2_1, x_1_0, x_2_0 = logistic_regression()
 
-        # Points inside the circle(radius=3) above the x-axis
-        x1_positive_1 = np.linspace(-2.99, 2.99, 100)
-        x2_positive_1 = np.sqrt(9 - x1_positive_1 ** 2) * np.random.rand(100)
+        # Show scatter plot of the training data with different marks representing
+        # different labels using plot_example_data staticmethod
+        LogisticRegression.plot_example_data(x_1_1, x_2_1, x_1_0, x_2_0)
+        print("The dataset is plotted as shown in the screen.  Solid circle points \n"
+              "and plus-tick points are datasets of different labels.\n")
+        plt.show()
 
-        # Points inside the circle(radius-3) below the x-axis
-        x1_negative_1 = np.linspace(-2.99, 2.99, 100)
-        x2_negative_1 = - np.sqrt(9 - x1_negative_1 ** 2) * np.random.rand(100)
+        # Concatenate the inside circle and outside circle points in a single array
+        x_1 = np.concatenate((x_1_1, x_1_0))
+        x_2 = np.concatenate((x_2_1, x_2_0))
 
-        # Points outside the circle
+        # Make whole training data into one input matrix, x and one output matrix, y
+        x = np.array(list(zip(x_1, x_2))) ** 2
+        y = np.concatenate((np.array([1] * 200), np.array([0] * 200))).reshape(-1, 1)
 
-        # Outside points above x-axis
-        x1_positive_0 = np.linspace(-2.99, 2.99, 100)
-        x2_positive_0 = np.sqrt(9 - x1_positive_1 ** 2) * (1 + np.random.rand(100))
+        return x, y
 
-        # Outside points below x-axis
-        x1_negative_0 = np.linspace(-2.99, 2.99, 100)
-        x2_negative_0 = - np.sqrt(9 - x1_positive_1 ** 2) * (1 + np.random.rand(100))
-
-        # Concatenate all the above circles and below circles point(inside the circle)
-        x_1_1 = np.concatenate((x1_positive_1, x1_negative_1))
-        x_2_1 = np.concatenate((x2_positive_1, x2_negative_1))
-
-        # Concatenate all the above circles and below circles point(outside the circle)
-        x_1_0 = np.concatenate((x1_positive_0, x1_negative_0))
-        x_2_0 = np.concatenate((x2_positive_0, x2_negative_0))
+    @staticmethod
+    def plot_example_data(x_1_1, x_2_1, x_1_0, x_2_0):
 
         # Show scatter plot of the training data with different marks representing
         # different labels
@@ -84,22 +79,10 @@ class LogisticRegression:
         plt.scatter(x_1_1, x_2_1, marker='o')
         plt.xlabel('x1')
         plt.ylabel('x2')
-        plt.xlim(-3.5,3.5)
-        plt.ylim(-6,6)
+        plt.xlim(-3.5, 3.5)
+        plt.ylim(-6, 6)
         plt.gca().set_aspect('equal', adjustable='box')
         plt.legend(('Outside circle', 'Inside circle'))
-
-        # plt.show()
-
-        # Concatenate the inside circle and outside circle points in a single array
-        x_1 = np.concatenate((x_1_1, x_1_0))
-        x_2 = np.concatenate((x_2_1, x_2_0))
-
-        # Make whole training data into one matrix, x
-        x = np.array(list(zip(x_1, x_2))) ** 2
-        y = np.concatenate((np.array([1] * 200), np.array([0] * 200))).reshape(-1, 1)
-
-        return x, y
 
     def train(self, lambd, alpha):
         """
@@ -107,11 +90,13 @@ class LogisticRegression:
         :param lambd: regularization parameter
         :param alpha: learning rate
         """
+
         a = sigmoid(np.matmul(self.x_train, self.w) + self.c)
         self.w = self.w - alpha * (np.matmul(self.x_train.T, a - self.y_train) / self.m + lambd * self.w / self.m)
         self.c = self.c - alpha * np.sum(a - self.y_train) / self.m
 
-        self.cost = np.sum(- self.y_train * np.log(a + 10**(-10)) - (1 - self.y_train) * np.log(1 - a + 10**(-10)))/self.m
+        self.cost = np.sum(- self.y_train * np.log(a + 10**(-10)) -
+                           (1 - self.y_train) * np.log(1 - a + 10**(-10)))/self.m
 
     def fit(self, alpha, no_of_iterations, lambd):
         """
@@ -122,6 +107,7 @@ class LogisticRegression:
         """
 
         # Training process to the given number of iterations
+        print("Training the model...\n")
         for i in range(no_of_iterations):
             self.train(lambd, alpha)
 
@@ -141,6 +127,16 @@ class LogisticRegression:
     def construct_boundary(self):
         """Construct the boundary"""
 
+        # Create the training set using logistic_regression function of dataset module
+        # x_i_j is ith feature when j is inside circle(1) or outside circle(0)
+        x_1_1, x_2_1, x_1_0, x_2_0 = logistic_regression()
+
+        # Show scatter plot of the training data with different marks representing
+        # different labels using plot_example_data staticmethod
+        LogisticRegression.plot_example_data(x_1_1, x_2_1, x_1_0, x_2_0)
+
+        # Build the boundary using the weights and biases got by training
+        # Upper and lower means above and below x-axis respectively
         x = np.linspace(-3, 3, 100)
 
         y_upper = np.sqrt(np.absolute((- self.c[0][0] - (x ** 2) * self.w[0][0]) / self.w[1][0]))
@@ -180,18 +176,19 @@ def main():
 
     # Use construct_training_matrices static method of LogisticRegression class
     # to construct and get the training data
+    print("Constructing sample dataset of points lying inside circle and outside circle...")
     x, y = getattr(LogisticRegression, 'construct_training_matrices')()
 
     # Train the model and predict
     logistic_regressor = LogisticRegression(x, y)
-    print("Training the model...\n")
     logistic_regressor.fit(0.1, 100000, 0)
     print("\nThe model has been trained.\nConstructing the boundary now ...\n")
     logistic_regressor.construct_boundary()
     print("The boundary is shown separating the two regions.\n")
 
     # Print weights and biases and the plot and also print the performance estimators of the model
-    print("So, the weights and biases become:\nWeights:\n {}\nBiases:\n {}".format(logistic_regressor.w, logistic_regressor.c))
+    print("So, the weights and biases become:\nWeights:\n {}\nBiases:\n {}"
+          .format(logistic_regressor.w, logistic_regressor.c))
 
     # Print the different accuracies and final cross entropy cost
     logistic_regressor.validate()
